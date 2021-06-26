@@ -15,5 +15,6 @@
   ],
   "scripts": {
     "test": "echo \"hello world\""
-  }
+  },
+  "gitHead": "dbe2f32eee3cc9b03b4bd5c0fa0e64588632579d"
 }
