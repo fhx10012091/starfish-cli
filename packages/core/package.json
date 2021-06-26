@@ -22,5 +22,8 @@
   "dependencies": {
     "@starfish-cli/utils": "^1.0.2"
   },
-  "gitHead": "dbe2f32eee3cc9b03b4bd5c0fa0e64588632579d"
+  "gitHead": "dbe2f32eee3cc9b03b4bd5c0fa0e64588632579d",
+  "publishConfig": {
+    "access": "public"
+  }
 }
