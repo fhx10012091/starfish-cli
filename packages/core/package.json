@@ -1,6 +1,6 @@
 {
   "name": "@starfish-cli/core",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "starfish-cli core",
   "author": "haixin <haixin.fang@ly.com>",
   "homepage": "",
@@ -17,6 +17,6 @@
     "test": "echo \"hello world\""
   },
   "dependencies": {
-    "@starfish-cli/utils": "^1.0.0"
+    "@starfish-cli/utils": "^1.0.1"
   }
 }
