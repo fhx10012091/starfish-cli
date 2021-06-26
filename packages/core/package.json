@@ -1,0 +1,22 @@
+{
+  "name": "@starfish-cli/core",
+  "version": "1.0.0",
+  "description": "starfish-cli core",
+  "author": "haixin <haixin.fang@ly.com>",
+  "homepage": "",
+  "license": "ISC",
+  "main": "lib/core.js",
+  "directories": {
+    "lib": "lib",
+    "test": "__tests__"
+  },
+  "files": [
+    "lib"
+  ],
+  "scripts": {
+    "test": "echo \"hello world\""
+  },
+  "dependencies": {
+    "@starfish-cli/utils": "^1.0.0"
+  }
+}
