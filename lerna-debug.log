@@ -1,0 +1,9 @@
+0 silly argv {
+0 silly argv   _: [ 'create' ],
+0 silly argv   lernaVersion: '3.22.1',
+0 silly argv   '$0': 'D:\\MyConfiguration\\haixin.fang\\AppData\\Roaming\\npm\\node_modules\\lerna\\cli.js',
+0 silly argv   name: '@starfish-cli/init'
+0 silly argv }
+1 notice cli v3.22.1
+2 verbose rootPath D:\starfish-cli\starfish-cli
+3 error
