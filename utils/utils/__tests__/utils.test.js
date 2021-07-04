@@ -2,6 +2,6 @@
 
 const utils = require('..');
 
-describe('utils', () => {
+describe('@starfish-cli/utils', () => {
     it('needs tests');
 });

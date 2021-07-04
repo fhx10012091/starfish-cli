@@ -20,7 +20,17 @@
     "test": "echo \"hello world\""
   },
   "dependencies": {
-    "@starfish-cli/utils": "file:../utils"
+    "@starfish-cli/log": "file:../../utils/log",
+    "@starfish-cli/get-npm-info": "file:../../utils/get-npm-info",
+    "colors": "^1.4.0",
+    "dotenv": "^10.0.0",
+    "import-local": "^3.0.2",
+    "minimist": "^1.2.5",
+    "npmlog": "^4.1.2",
+    "path-exists": "^4.0.0",
+    "root-check": "^1.0.0",
+    "semver": "^7.3.5",
+    "user-home": "^3.0.0"
   },
   "gitHead": "dbe2f32eee3cc9b03b4bd5c0fa0e64588632579d",
   "publishConfig": {

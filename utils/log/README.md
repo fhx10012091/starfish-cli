@@ -1,11 +1,11 @@
-# `utils`
+# `@starfish-cli/log`
 
 > TODO: description
 
 ## Usage
 
 ```
-const utils = require('utils');
+const log = require('@starfish-cli/log');
 
 // TODO: DEMONSTRATE API
 ```
