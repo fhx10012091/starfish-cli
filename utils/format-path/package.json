@@ -1,5 +1,5 @@
 {
-  "name": "@starfish-cli/init",
+  "name": "@starfish-cli/format-path",
   "version": "1.0.3",
   "description": "> TODO: description",
   "author": "fhx10012091 <1875934025@qq.com>",
@@ -15,10 +15,6 @@
   ],
   "publishConfig": {
     "access": "public"
-  },
-  "dependencies": {
-    "@starfish-cli/command": "file:../../models/command",
-    "@starfish-cli/log": "file:../../utils/log"
   },
   "repository": {
     "type": "git",

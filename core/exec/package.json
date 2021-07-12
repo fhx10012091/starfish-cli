@@ -1,6 +1,6 @@
 {
-  "name": "@starfish-cli/init",
-  "version": "1.0.3",
+  "name": "@starfish-cli/exec",
+  "version": "1.0.0",
   "description": "> TODO: description",
   "author": "fhx10012091 <1875934025@qq.com>",
   "homepage": "https://github.com/fhx10012091/starfish-cli#readme",
@@ -17,7 +17,7 @@
     "access": "public"
   },
   "dependencies": {
-    "@starfish-cli/command": "file:../../models/command",
+    "@starfish-cli/package": "file:../../models/package",
     "@starfish-cli/log": "file:../../utils/log"
   },
   "repository": {

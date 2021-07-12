@@ -2,6 +2,7 @@
 const pkg = require('../package.json')
 const log = require('@starfish-cli/log')
 const init = require('@starfish-cli/init')
+const exec = require('@starfish-cli/exec')
 const constact = require('./const')
 const semver = require('semver')
 const colors = require('colors')
@@ -15,13 +16,7 @@ let argv, config
 function core() {
     // TODO
     try {
-        checkPkgVersion()
-        checkNodeVersion()
-        checkRoot()
-        checkUserHome()
-        // checkInputArgv()
-        checkEnv()
-        checkNpmInfo()
+        prepare()
         registerCommand()
     } catch (e) {
         log.error(e.message)
@@ -34,14 +29,15 @@ function registerCommand() {
         .name(Object.keys(pkg.bin)[0])
         .usage('<command> [options]')
         .version(pkg.version)
-        .option('-d, --debug', '是否开启调试着模式', false);
+        .option('-d, --debug', '是否开启调试着模式', false)
+        .option('-tp, --targetPath <targetPath>', '是否指定本地调试文件路径', '');
 
     // 初始化命令行
     program
-        .command('init <projectName>')
+        .command('init [projectName]')
         .description('初始化项目')
         .option('-f, --force', '是否强制初始化项目')
-        .action(init)
+        .action(exec)
 
     
     program.on('option:debug', function () {
@@ -53,7 +49,14 @@ function registerCommand() {
         }
         log.level = process.env.LOG_LEVEL
     })
-
+    program.on('option:targetPath', function(){
+        // 包与包之间进行解耦
+        // 使用环境变量
+        let targetPath = program.opts().targetPath
+        if(targetPath){
+            process.env.CLI_TARGET_PATH = targetPath
+        }
+    })
     program.on('command:*', function(obj){
         let availableCommand = program.commands.map(cmd => cmd.name())
         console.log(colors.red(`未知的命令:${obj[0]}`))
@@ -61,12 +64,20 @@ function registerCommand() {
             console.log(colors.green(`可用命令:${availableCommand.join(',')}`))
         }
     })
-    // console.log(program)
-    // if(program.args && program.args.length < 1){
-    //     program.outputHelp()
-    // }
+    if(process.argv.length < 3){
+        program.outputHelp()
+    }
     // if(program.args && program.)
     program.parse(process.argv)
+}
+// 准备阶段
+function prepare(){
+    // checkPkgVersion()
+    // checkNodeVersion()
+    checkRoot()
+    checkUserHome()
+    checkEnv()
+    checkNpmInfo()
 }
 
 async function checkNpmInfo() {
@@ -91,7 +102,6 @@ function checkEnv() {
         })
     }
     createDefaultConfig()
-    log.verbose('环境变量', process.env.CLI_HOME_PATH)
 }
 
 function createDefaultConfig() {
@@ -106,21 +116,6 @@ function createDefaultConfig() {
     process.env.CLI_HOME_PATH = cliConfig['cliHome']
 }
 
-// 解析debug
-function checkInputArgv() {
-    let minimist = require('minimist')
-    argv = minimist(process.argv.slice(2))
-    checkArgs()
-}
-
-function checkArgs() {
-    if (argv.debug) {
-        process.env.LOG_LEVEL = 'verbose'
-    } else {
-        process.env.LOG_LEVEL = 'info'
-    }
-    log.level = process.env.LOG_LEVEL
-}
 // 检查用户是否存在主目录
 function checkUserHome() {
     if (!userHome || !pathExists(userHome)) {
@@ -133,20 +128,11 @@ function checkRoot() {
     let rootCheck = require('root-check')
     rootCheck()
 }
-// 检查Node的版本
-function checkNodeVersion() {
-    // 当前node的版本
-    let currentNodeVersion = process.version
-    // 最低node版本
-    let lowerNodeVersion = constact.LOWEST_NODE_VERSION
-    if (!semver.gte(currentNodeVersion, lowerNodeVersion)) {
-        throw new Error(colors.red(`starfish-cli 需安装 v${lowerNodeVersion} 以上版本的node.js`))
-    }
-}
+
 
 // 检查库的版本
-function checkPkgVersion() {
-    log.success('test', pkg.version)
-}
+// function checkPkgVersion() {
+//     log.success('test', pkg.version)
+// }
 
 module.exports = core;
