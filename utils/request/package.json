@@ -1,6 +1,6 @@
 {
-  "name": "@starfish-cli/init",
-  "version": "1.0.3",
+  "name": "@starfish-cli/request",
+  "version": "1.0.0",
   "description": "> TODO: description",
   "author": "fhx10012091 <1875934025@qq.com>",
   "homepage": "https://github.com/fhx10012091/starfish-cli#readme",
@@ -16,14 +16,6 @@
   "publishConfig": {
     "access": "public"
   },
-  "dependencies": {
-    "@starfish-cli/command": "file:../../models/command",
-    "@starfish-cli/log": "file:../../utils/log",
-    "@starfish-cli/request": "file:../../utils/request",
-    "fs-extra": "^10.0.0",
-    "inquirer": "^8.1.2",
-    "semver": "^7.3.5"
-  },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/fhx10012091/starfish-cli.git"
@@ -33,5 +25,8 @@
   },
   "bugs": {
     "url": "https://github.com/fhx10012091/starfish-cli/issues"
+  },
+  "dependencies": {
+    "axios": "^0.21.1"
   }
 }

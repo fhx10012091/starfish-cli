@@ -6,6 +6,7 @@ const fs = require('fs')
 const fse = require('fs-extra')
 const localPath = process.cwd()
 const semver = require('semver')
+const getProjectTemplate = require('./getProjectTemplate')
 const TYPE_PROJECT = 'project'
 const TYPE_COMPONENT = 'component'
 class initCommand extends Command {
@@ -23,6 +24,7 @@ class initCommand extends Command {
             // 1、 准备阶段
             const projectInfo = await this.prepare()
             log.verbose('projectInfo', projectInfo)
+            this.projectInfo = projectInfo
             this.downloadTemplate()
             // 2、 下载模板
             // 3、 安装模板
@@ -31,6 +33,13 @@ class initCommand extends Command {
         }
     }
     async prepare() {
+        // 判断项目目标是否存在
+        // console.log(getProjectTemplate)
+        const template = await getProjectTemplate()
+        if (!template || template.length === 0) {
+            throw new Error('项目模板不存在')
+        }
+        this.template = template
         // 判断目录是否为空
         // 是否启动强制更新
         if (!this.isCwdEmpty()) {
@@ -125,6 +134,11 @@ class initCommand extends Command {
                         return v
                     }
                 }
+            }, {
+                type: 'list',
+                name: 'projectTemplate',
+                message: '请选择项目模板',
+                choices: this.createTemplateChoice()
             }])
             projectInfo = {
                 type,
@@ -136,8 +150,14 @@ class initCommand extends Command {
 
         return projectInfo
     }
-    downloadTemplate(){
-
+    createTemplateChoice() {
+        return this.template.map(item => ({
+            value: item.npmName,
+            name: item.name
+        }))
+    }
+    downloadTemplate() {
+        console.log(this.projectInfo, this.template)
     }
     isCwdEmpty() {
         let fileList = fs.readdirSync(localPath)
