@@ -19,10 +19,13 @@
   "dependencies": {
     "@starfish-cli/command": "file:../../models/command",
     "@starfish-cli/log": "file:../../utils/log",
+    "@starfish-cli/package": "file:../../models/package",
     "@starfish-cli/request": "file:../../utils/request",
+    "@starfish-cli/utils": "file:../../utils/utils",
     "fs-extra": "^10.0.0",
     "inquirer": "^8.1.2",
-    "semver": "^7.3.5"
+    "semver": "^7.3.5",
+    "user-home": "^3.0.0"
   },
   "repository": {
     "type": "git",

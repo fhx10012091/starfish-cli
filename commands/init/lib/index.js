@@ -1,7 +1,11 @@
 'use strict';
 const inquirer = require('inquirer')
+const path = require('path')
 const log = require('@starfish-cli/log')
 const Command = require('@starfish-cli/command')
+const Package = require('@starfish-cli/package')
+const {spinnerStart, sleep} = require('@starfish-cli/utils')
+const userHome = require('user-home')
 const fs = require('fs')
 const fse = require('fs-extra')
 const localPath = process.cwd()
@@ -25,7 +29,7 @@ class initCommand extends Command {
             const projectInfo = await this.prepare()
             log.verbose('projectInfo', projectInfo)
             this.projectInfo = projectInfo
-            this.downloadTemplate()
+            await this.downloadTemplate()
             // 2、 下载模板
             // 3、 安装模板
         } catch (e) {
@@ -67,7 +71,6 @@ class initCommand extends Command {
                     fse.emptyDirSync(localPath)
                 }
             }
-
         }
         return this.getProjectInfo()
     }
@@ -98,7 +101,7 @@ class initCommand extends Command {
                 type: 'input',
                 name: 'projectName',
                 message: '请输入项目名称',
-                default: '',
+                default: 'starfish_projectname',
                 validate: function (v) {
                     const done = this.async()
                     setTimeout(() => {
@@ -116,7 +119,7 @@ class initCommand extends Command {
                 type: 'input',
                 name: 'projectVersition',
                 message: '请输入版本号',
-                default: '',
+                default: '1.0.0',
                 validate: function (v) {
                     const done = this.async()
                     setTimeout(() => {
@@ -156,8 +159,47 @@ class initCommand extends Command {
             name: item.name
         }))
     }
-    downloadTemplate() {
-        console.log(this.projectInfo, this.template)
+    async downloadTemplate() {
+        // console.log(this.projectInfo, this.template)
+        const {projectTemplate} = this.projectInfo
+        const templateInfo = this.template.find(item => {
+            return item.npmName === projectTemplate
+        })
+        // console.log(userHome)
+        // console.log('templateInfo', templateInfo)
+        const targetPath = path.resolve(userHome, '.starfish-cli', 'template')
+        const storeDir = path.resolve(userHome, '.starfish-cli', 'template', 'node_modules')
+        const {npmName, version} = templateInfo
+        const templateNpm = new Package({
+            targetPath,
+            storeDir,
+            packageName: npmName,
+            packageVersion: version
+        })
+        if(!await templateNpm.exists()){
+            const spinner = spinnerStart('正在加载模板...')
+            await sleep(2000)
+            try{
+                await templateNpm.install()
+            }catch(e){
+                throw e
+            }finally{
+                spinner.stop(true)
+            }
+            spinner.stop(true)
+            log.success('下载模板成功！')
+        }else{ 
+            const spinner = spinnerStart('正在更新模板...')
+            await sleep(2000)
+            try{
+                await templateNpm.update()
+            }catch(e){
+                throw e
+            }finally{
+                spinner.stop(true)
+            }
+            log.success('更新模板成功！')
+        }
     }
     isCwdEmpty() {
         let fileList = fs.readdirSync(localPath)
