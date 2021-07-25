@@ -18,7 +18,8 @@
   },
   "dependencies": {
     "@starfish-cli/package": "file:../../models/package",
-    "@starfish-cli/log": "file:../../utils/log"
+    "@starfish-cli/log": "file:../../utils/log",
+    "@starfish-cli/utils": "file:../../utils/utils"
   },
   "repository": {
     "type": "git",

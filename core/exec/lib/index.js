@@ -1,8 +1,9 @@
 'use strict';
 const path = require('path')
-const cp = require('child_process')
+
 const Package = require('@starfish-cli/package')
 const log = require('@starfish-cli/log')
+const {spawn} = require('@starfish-cli/utils')
 const SETTINGS = {
     init: '@imooc-cli/init'
 }
@@ -83,11 +84,11 @@ async function exec() {
         }
     }
 }
-function spawn(command, args, options){
-    const win32 = process.platform == 'win32'
-    const cmd = win32 ? 'cmd' : command
-    const cmdArgs = win32 ? ['/c'].concat(command, args):args
-    return cp.spawn(cmd, cmdArgs, options || {})
-}
+// function spawn(command, args, options){
+//     const win32 = process.platform == 'win32'
+//     const cmd = win32 ? 'cmd' : command
+//     const cmdArgs = win32 ? ['/c'].concat(command, args):args
+//     return cp.spawn(cmd, cmdArgs, options || {})
+// }
 module.exports = exec;
 

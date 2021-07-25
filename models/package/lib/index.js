@@ -46,7 +46,7 @@ class Package {
     async exists() {
         if (this.storeDir) {
             await this.prepare()
-            console.log(this.cancheFilePath)
+            // console.log(this.cancheFilePath)
             return pathExists(this.cancheFilePath)
         } else {
             return pathExists(this.targetPath)
@@ -83,6 +83,7 @@ class Package {
             })
             this.packageVersion = latestPackageVersion
         } else {
+            this.packageVersion = latestPackageVersion
             console.log('已经是最新的版本了！')
         }
     }

@@ -4,15 +4,20 @@ const path = require('path')
 const log = require('@starfish-cli/log')
 const Command = require('@starfish-cli/command')
 const Package = require('@starfish-cli/package')
-const {spinnerStart, sleep} = require('@starfish-cli/utils')
+const { spinnerStart, sleep, spawnAsync } = require('@starfish-cli/utils')
 const userHome = require('user-home')
 const fs = require('fs')
 const fse = require('fs-extra')
 const localPath = process.cwd()
 const semver = require('semver')
 const getProjectTemplate = require('./getProjectTemplate')
+const ejs = require('ejs')
 const TYPE_PROJECT = 'project'
 const TYPE_COMPONENT = 'component'
+const TEMPLATE_TYPE_NORMAL = 'normal'
+const TEMPLATE_TYPE_CUSTOM = 'custom'
+
+const WHITE_COMMAND = ['npm', 'cnpm']
 class initCommand extends Command {
     constructor(argv) {
         super(argv)
@@ -29,12 +34,113 @@ class initCommand extends Command {
             const projectInfo = await this.prepare()
             log.verbose('projectInfo', projectInfo)
             this.projectInfo = projectInfo
-            await this.downloadTemplate()
             // 2、 下载模板
+            await this.downloadTemplate()
             // 3、 安装模板
+            await this.installTemplate()
         } catch (e) {
             log.error(e.message)
         }
+    }
+    async installTemplate() {
+        log.verbose('templateInfo', this.templateInfo)
+        if (this.templateInfo) {
+            if (!this.templateInfo.type) {
+                this.templateInfo.type = TEMPLATE_TYPE_NORMAL
+            }
+            if (this.templateInfo.type === TEMPLATE_TYPE_NORMAL) {
+                await this.installNormalTemplate()
+            } else if (this.templateInfo.type === TEMPLATE_TYPE_CUSTOM) {
+                await this.installCustomTemplate()
+            } else {
+                throw new Error('项目模板无法识别！')
+            }
+        } else {
+            throw new Error('项目模板信息不存在！')
+        }
+    }
+    async execCommand(command, err) {
+        if (command) {
+            const installCmd = command.split(' ')
+            const cmd = this.checkCommand(installCmd[0])
+            const args = installCmd.slice(1)
+            let installRet = await spawnAsync(cmd, args, {
+                stdio: 'inherit',
+                cmd: process.cwd()
+            })
+            if (installRet > 0) {
+                throw err
+            }
+        }
+    }
+    async ejsRender(options) {
+        const dir = process.cwd()
+        return new Promise((resolve, reject) => {
+            require('glob')('**', {
+                cwd: dir,
+                ignore: options.ignore,
+                nodir: true
+            }, (err, files) => {
+                if (err) {
+                    reject(err)
+                }
+                Promise.all(files.map(file => {
+                    const filePath = path.join(dir, file)
+                    return new Promise((resolve1, reject1) => {
+                        ejs.renderFile(filePath, this.projectInfo, (err, result) => {
+                            console.log(err, result)
+                            if (err) {
+                                reject1(err)
+                            } else {
+                                fs.writeFileSync(filePath, result)
+                                resolve1(result)
+                            }
+                        })
+                    })
+                })).then(() => {
+                    resolve()
+                }).catch(err => {
+                    reject(err)
+                })
+            })
+        })
+    }
+    async installNormalTemplate() {
+        // console.log('安装标准模板')
+        // 拷贝模板代码至当前目录
+        let spinner = spinnerStart('正在加载模板...')
+        await sleep(2000)
+        try {
+            const templatePath = path.resolve(this.templateNpm.cancheFilePath, 'template')
+            const targetPath = process.cwd()
+            fse.ensureDirSync(templatePath)
+            fse.ensureDirSync(targetPath)
+            fse.copySync(templatePath, targetPath)
+        } catch (e) {
+            throw e
+        } finally {
+            spinner.stop(true)
+            log.success('模板安装成功')
+        }
+        // 模板渲染
+        const ignore = ['node_modules/**', 'public/**']
+        await this.ejsRender({
+            ignore
+        })
+        // 依赖安装
+        const { installCommand, startCommand } = this.templateInfo
+        await this.execCommand(installCommand, '依赖安装过程中失败!')
+        // 启动命令执行
+        await this.execCommand(startCommand, '执行过程中失败!')
+    }
+    checkCommand(cmd) {
+        if (WHITE_COMMAND.indexOf(cmd) > -1) {
+            return cmd
+        }
+        return null
+    }
+    async installCustomTemplate() {
+        console.log('安装自定义模板')
     }
     async prepare() {
         // 判断项目目标是否存在
@@ -75,7 +181,15 @@ class initCommand extends Command {
         return this.getProjectInfo()
     }
     async getProjectInfo() {
+        function isValidName(v) {
+            return /^[a-zA-Z]+([_][a-zA-Z][a-zA-Z0-9]*|[-][a-zA-Z][a-zA-Z0-9]*|[a-zA-Z0-9])*$/.test(v)
+        }
         let projectInfo = {}
+        let isProjectNameVaild = false
+        if (isValidName(this.projectName)) {
+            isProjectNameVaild = true
+            projectInfo.projectName = this.projectName
+        }
         // 选择创建项目或组件
         // const type = ''
         const { type } = await inquirer.prompt({
@@ -97,7 +211,7 @@ class initCommand extends Command {
         log.verbose('type', type)
         if (type === TYPE_PROJECT) {
             // 获取项目的基本信息
-            const project = await inquirer.prompt([{
+            const projectNamePrompt = {
                 type: 'input',
                 name: 'projectName',
                 message: '请输入项目名称',
@@ -105,7 +219,7 @@ class initCommand extends Command {
                 validate: function (v) {
                     const done = this.async()
                     setTimeout(() => {
-                        if (!/^[a-zA-Z]+([_][a-zA-Z][a-zA-Z0-9]*|[-][a-zA-Z][a-zA-Z0-9]*|[a-zA-Z0-9])*$/.test(v)) {
+                        if (!isValidName(v)) {
                             done('请输入合法的项目名称')
                             return
                         }
@@ -115,9 +229,14 @@ class initCommand extends Command {
                 filter: (v) => {
                     return v
                 }
-            }, {
+            }
+            const projectPrompt = []
+            if (!isProjectNameVaild) {
+                projectPrompt.push(projectNamePrompt)
+            }
+            projectPrompt.push({
                 type: 'input',
-                name: 'projectVersition',
+                name: 'projectVersion',
                 message: '请输入版本号',
                 default: '1.0.0',
                 validate: function (v) {
@@ -142,15 +261,19 @@ class initCommand extends Command {
                 name: 'projectTemplate',
                 message: '请选择项目模板',
                 choices: this.createTemplateChoice()
-            }])
-            projectInfo = {
+            })
+            const project = await inquirer.prompt(projectPrompt)
+            projectInfo = Object.assign({}, projectInfo, {
                 type,
                 ...project
-            }
+            })
         } else {
 
         }
-
+        if (projectInfo.projectName) {
+            projectInfo.version = projectInfo.projectVersion
+            projectInfo.className = require('kebab-case')(projectInfo.projectName).replace(/^-/, '')
+        }
         return projectInfo
     }
     createTemplateChoice() {
@@ -161,44 +284,51 @@ class initCommand extends Command {
     }
     async downloadTemplate() {
         // console.log(this.projectInfo, this.template)
-        const {projectTemplate} = this.projectInfo
+        const { projectTemplate } = this.projectInfo
         const templateInfo = this.template.find(item => {
             return item.npmName === projectTemplate
         })
+        this.templateInfo = templateInfo
         // console.log(userHome)
         // console.log('templateInfo', templateInfo)
         const targetPath = path.resolve(userHome, '.starfish-cli', 'template')
         const storeDir = path.resolve(userHome, '.starfish-cli', 'template', 'node_modules')
-        const {npmName, version} = templateInfo
+        const { npmName, version } = templateInfo
         const templateNpm = new Package({
             targetPath,
             storeDir,
             packageName: npmName,
             packageVersion: version
         })
-        if(!await templateNpm.exists()){
+        // log.verbose('templateNpm', templateNpm)
+        if (!await templateNpm.exists()) {
             const spinner = spinnerStart('正在加载模板...')
             await sleep(2000)
-            try{
+            try {
                 await templateNpm.install()
-            }catch(e){
+            } catch (e) {
                 throw e
-            }finally{
+            } finally {
                 spinner.stop(true)
+                if (await templateNpm.exists()) {
+                    log.success('下载模板成功！')
+                    this.templateNpm = templateNpm
+                }
             }
-            spinner.stop(true)
-            log.success('下载模板成功！')
-        }else{ 
+        } else {
             const spinner = spinnerStart('正在更新模板...')
             await sleep(2000)
-            try{
+            try {
                 await templateNpm.update()
-            }catch(e){
+            } catch (e) {
                 throw e
-            }finally{
+            } finally {
                 spinner.stop(true)
+                if (await templateNpm.exists()) {
+                    log.success('更新模板成功！')
+                    this.templateNpm = templateNpm
+                }
             }
-            log.success('更新模板成功！')
         }
     }
     isCwdEmpty() {
