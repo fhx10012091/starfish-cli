@@ -123,7 +123,8 @@ class initCommand extends Command {
             log.success('模板安装成功')
         }
         // 模板渲染
-        const ignore = ['node_modules/**', 'public/**']
+        const templateIgnore = this.templateInfo.ignore || []
+        const ignore = ['node_modules/**', ...templateIgnore]
         await this.ejsRender({
             ignore
         })
@@ -140,7 +141,25 @@ class initCommand extends Command {
         return null
     }
     async installCustomTemplate() {
-        console.log('安装自定义模板')
+         let rootFile = this.templateNpm.getRootFilePath()
+         if(fs.existsSync(rootFile)){
+            // rootFile = 'D:/starfish-cli/starfish-cli-template/starfish-cli-template-custom-vue2/index.js';
+             log.notice('开始执行自定义模板');
+             const templatePath = path.resolve(this.templateNpm.cancheFilePath, 'template')
+             const options = {
+                 ...this.templateInfo,
+                 sourcePath: templatePath,
+                 ...this.projectInfo,
+                targetPath: process.cwd()
+             };
+             const code = `require('${rootFile}')(${JSON.stringify(options)})`;
+             log.verbose('code', code)
+             await spawnAsync('node', ['-e', code], {
+                 stdio: 'inherit',
+                 cwd: process.cwd()
+             });
+             log.success('自定义模板安装成功')
+         }
     }
     async prepare() {
         // 判断项目目标是否存在
@@ -186,7 +205,7 @@ class initCommand extends Command {
         }
         let projectInfo = {}
         let isProjectNameVaild = false
-        if (isValidName(this.projectName)) {
+        if (isValidName(this.projectName) && !!this.projectName) {
             isProjectNameVaild = true
             projectInfo.projectName = this.projectName
         }
@@ -209,18 +228,18 @@ class initCommand extends Command {
             ]
         })
         log.verbose('type', type)
-        if (type === TYPE_PROJECT) {
-            // 获取项目的基本信息
-            const projectNamePrompt = {
+        this.template = this.template.filter(template => template.tag.includes(type))
+         const title = type ===TYPE_PROJECT?'项目':'组件'
+         const projectNamePrompt = {
                 type: 'input',
                 name: 'projectName',
-                message: '请输入项目名称',
+                message: `请输入合法${title}名称`,
                 default: 'starfish_projectname',
                 validate: function (v) {
                     const done = this.async()
                     setTimeout(() => {
                         if (!isValidName(v)) {
-                            done('请输入合法的项目名称')
+                            done(`请输入合法${title}名称`)
                             return
                         }
                         done(null, true)
@@ -259,20 +278,49 @@ class initCommand extends Command {
             }, {
                 type: 'list',
                 name: 'projectTemplate',
-                message: '请选择项目模板',
+                message: `请选择${type}模板`,
                 choices: this.createTemplateChoice()
             })
+        if (type === TYPE_PROJECT) {
+            // 获取项目的基本信息
             const project = await inquirer.prompt(projectPrompt)
             projectInfo = Object.assign({}, projectInfo, {
                 type,
                 ...project
             })
         } else {
-
+            const descriptPrompt = {
+                type: 'input',
+                name: 'componentDescription',
+                message: '请输入组件描述信息',
+                default: '',
+                validate: function (v) {
+                    const done = this.async()
+                    setTimeout(() => {
+                        if (!v) {
+                            done('请输入组件描述信息')
+                            return
+                        }
+                        done(null, true)
+                    })
+                }
+            }
+            projectPrompt.push(descriptPrompt)
+            // 获取组件基本信息
+            const component = await inquirer.prompt(projectPrompt)
+            projectInfo = Object.assign({}, projectInfo, {
+                type,
+                ...component
+            })
         }
         if (projectInfo.projectName) {
-            projectInfo.version = projectInfo.projectVersion
             projectInfo.className = require('kebab-case')(projectInfo.projectName).replace(/^-/, '')
+        }
+        if(projectInfo.projectVersion){
+            projectInfo.version = projectInfo.projectVersion
+        }
+        if(projectInfo.componentDescription){
+            projectInfo.description = projectInfo.componentDescription
         }
         return projectInfo
     }
@@ -319,7 +367,7 @@ class initCommand extends Command {
             const spinner = spinnerStart('正在更新模板...')
             await sleep(2000)
             try {
-                await templateNpm.update()
+                await templateNpm.update(true)
             } catch (e) {
                 throw e
             } finally {
