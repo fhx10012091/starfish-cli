@@ -1,6 +1,6 @@
 {
   "name": "@starfish-cli/command",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "> TODO: description",
   "author": "fhx10012091 <1875934025@qq.com>",
   "homepage": "https://github.com/fhx10012091/starfish-cli#readme",
@@ -27,9 +27,9 @@
     "url": "https://github.com/fhx10012091/starfish-cli/issues"
   },
   "dependencies": {
-    "colors": "^1.4.0",
     "@starfish-cli/log": "file:../../utils/log",
     "@starfish-cli/utils": "file:../../utils/utils",
+    "colors": "^1.4.0",
     "semver": "^7.3.5"
   }
 }

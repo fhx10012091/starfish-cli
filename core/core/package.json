@@ -1,6 +1,6 @@
 {
   "name": "@starfish-cli/core",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "starfish-cli core",
   "author": "haixin <haixin.fang@ly.com>",
   "homepage": "",
@@ -20,10 +20,10 @@
     "test": "echo \"hello world\""
   },
   "dependencies": {
+    "@starfish-cli/exec": "file:../exec",
     "@starfish-cli/get-npm-info": "file:../../utils/get-npm-info",
     "@starfish-cli/init": "file:../../commands/init",
     "@starfish-cli/log": "file:../../utils/log",
-    "@starfish-cli/exec": "file:../exec",
     "colors": "^1.4.0",
     "commander": "^8.0.0",
     "dotenv": "^10.0.0",
